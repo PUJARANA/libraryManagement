@@ -1,0 +1,561 @@
+Index: src/main/java/library/controller/LibraryController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package library.controller;\n\npublic class LibraryController {\n\n}\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/controller/LibraryController.java b/src/main/java/library/controller/LibraryController.java
+--- a/src/main/java/library/controller/LibraryController.java	(revision 2380e09d101b3a38534b5fd33ce31f34adc10660)
++++ b/src/main/java/library/controller/LibraryController.java	(date 1618156076328)
+@@ -1,7 +1,27 @@
+ package library.controller;
+ 
++import library.model.LibraryRespDto;
++import library.service.LibraryService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++/*
++This controller class is the entry point to all incoming request
++@author:Pooja
++ */
++@RestController
++@RequestMapping("library/books")
+ public class LibraryController {
+ 
++    @Autowired
++    private LibraryService libraryService;
++
++    @GetMapping
++    public LibraryRespDto getBooks() {
++        return libraryService.getBooks();
++    }
+ }
+ 
+ 
+Index: src/main/java/library/entity/Books.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/entity/Books.java b/src/main/java/library/entity/Books.java
+new file mode 100644
+--- /dev/null	(date 1616643310800)
++++ b/src/main/java/library/entity/Books.java	(date 1616643310800)
+@@ -0,0 +1,65 @@
++package library.entity;
++
++import javax.persistence.*;
++import javax.validation.constraints.NotNull;
++import java.io.Serializable;
++import java.util.HashSet;
++import java.util.Set;
++
++@Entity
++@Table(name = "books")
++public class Books implements Serializable {
++
++    @Id
++    private long id;
++
++    @Column
++    @NotNull
++    private String name;
++
++    @Column(name = "author_name")
++    @NotNull
++    private String authorName;
++
++    @Column
++    @NotNull
++    private long copies;
++
++    @ManyToMany(mappedBy = "borrowedBooksSet", fetch = FetchType.LAZY)
++    private Set<User> users = new HashSet<>();
++
++    public Books() {
++    }
++
++    public long getId() {
++        return id;
++    }
++
++    public void setId(long id) {
++        this.id = id;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++
++    public String getAuthorName() {
++        return authorName;
++    }
++
++    public void setAuthorName(String authorName) {
++        this.authorName = authorName;
++    }
++
++    public long getCopies() {
++        return copies;
++    }
++
++    public void setCopies(long copies) {
++        this.copies = copies;
++    }
++}
+Index: src/main/java/library/entity/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/entity/User.java b/src/main/java/library/entity/User.java
+new file mode 100644
+--- /dev/null	(date 1616642214406)
++++ b/src/main/java/library/entity/User.java	(date 1616642214406)
+@@ -0,0 +1,81 @@
++package library.entity;
++
++
++
++import javax.persistence.*;
++import javax.validation.constraints.NotNull;
++import java.io.Serializable;
++import java.util.HashSet;
++import java.util.Set;
++
++@Entity
++@Table(name = "user")
++public class User implements Serializable {
++    @Id
++    private Long id;
++
++    @NotNull
++    @Column
++    private String name;
++
++    @NotNull
++    @Column
++    private String email;
++
++    @NotNull
++    @Column(name = "books_limit")
++    private Long booksLimit;
++
++    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
++    @JoinTable(name = "borrowed_books",
++            joinColumns = {
++                    @JoinColumn(name = "user_id", referencedColumnName = "id",
++                            nullable = false, updatable = false)},
++            inverseJoinColumns = {
++                    @JoinColumn(name = "book_id", referencedColumnName = "id",
++                            nullable = false, updatable = false)})
++    private Set<Books> borrowedBooksSet = new HashSet<>();
++
++    public User() {
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++
++    public String getEmail() {
++        return email;
++    }
++
++    public void setEmail(String email) {
++        this.email = email;
++    }
++
++    public Long getBooksLimit() {
++        return booksLimit;
++    }
++
++    public void setBooksLimit(Long booksLimit) {
++        this.booksLimit = booksLimit;
++    }
++
++    public Set<Books> getBorrowedBooksSet() {
++        return borrowedBooksSet;
++    }
++
++    public void setBorrowedBooksSet(Set<Books> borrowedBooksSet) {
++        this.borrowedBooksSet = borrowedBooksSet;
++    }
++}
+Index: src/main/java/library/service/LibraryService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/service/LibraryService.java b/src/main/java/library/service/LibraryService.java
+new file mode 100644
+--- /dev/null	(date 1618682704118)
++++ b/src/main/java/library/service/LibraryService.java	(date 1618682704118)
+@@ -0,0 +1,11 @@
++package library.service;
++
++import library.model.LibraryRespDto;
++
++public interface LibraryService {
++    default LibraryRespDto  getBooks(){
++
++    }
++
++
++}
+Index: src/main/resources/application.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+new file mode 100644
+--- /dev/null	(date 1616640081647)
++++ b/src/main/resources/application.properties	(date 1616640081647)
+@@ -0,0 +1,9 @@
++spring.datasource.url=jdbc:h2:mem:librarydb
++spring.datasource.driverClassName=org.h2.Driver
++spring.datasource.username=sa
++spring.datasource.password=password
++spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
++spring.h2.console.enabled=true
++spring.datasource.initialization-mode=always
++spring.datasource.platform=h2
++
+Index: src/main/java/library/repository/UserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/repository/UserRepository.java b/src/main/java/library/repository/UserRepository.java
+new file mode 100644
+--- /dev/null	(date 1616643310667)
++++ b/src/main/java/library/repository/UserRepository.java	(date 1616643310667)
+@@ -0,0 +1,9 @@
++package library.repository;
++
++import library.entity.User;
++import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public interface UserRepository extends JpaRepository<User,Long>{
++}
+Index: src/main/java/library/repository/BooksRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/repository/BooksRepository.java b/src/main/java/library/repository/BooksRepository.java
+new file mode 100644
+--- /dev/null	(date 1616643310757)
++++ b/src/main/java/library/repository/BooksRepository.java	(date 1616643310757)
+@@ -0,0 +1,9 @@
++package library.repository;
++
++import library.entity.Books;
++import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public interface BooksRepository extends JpaRepository<Books,Long> {
++}
+Index: src/main/java/library/service/impl/LibraryServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/service/impl/LibraryServiceImpl.java b/src/main/java/library/service/impl/LibraryServiceImpl.java
+new file mode 100644
+--- /dev/null	(date 1618682068635)
++++ b/src/main/java/library/service/impl/LibraryServiceImpl.java	(date 1618682068635)
+@@ -0,0 +1,28 @@
++package library.service.impl;
++
++import library.entity.Books;
++import library.model.LibraryRespDto;
++import library.repository.BooksRepository;
++import library.service.LibraryService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Service;
++
++import java.util.List;
++
++@Service
++public class LibraryServiceImpl implements LibraryService {
++
++    @Autowired
++    private BooksRepository booksRepository;
++
++    @Override
++    public LibraryRespDto getBooks() {
++        List<Books> booksEntityList = booksRepository.findAll();
++        booksEntityList.
++        if(booksEntityList.isEmpty(){
++
++
++        }
++        return null;
++    }
++}
+Index: src/main/java/library/model/BooksDto.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/model/BooksDto.java b/src/main/java/library/model/BooksDto.java
+new file mode 100644
+--- /dev/null	(date 1616251991801)
++++ b/src/main/java/library/model/BooksDto.java	(date 1616251991801)
+@@ -0,0 +1,51 @@
++package library.model;
++
++public class BooksDto {
++
++    private long id;
++    private String name;
++    private String authorName;
++    private long copies;
++
++    public BooksDto(long id, String name, String authorName, long copies) {
++        this.id = id;
++        this.name = name;
++        this.authorName = authorName;
++        this.copies = copies;
++    }
++
++    public BooksDto() {
++    }
++
++    public long getId() {
++        return id;
++    }
++
++    public void setId(long id) {
++        this.id = id;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++
++    public String getAuthorName() {
++        return authorName;
++    }
++
++    public void setAuthorName(String authorName) {
++        this.authorName = authorName;
++    }
++
++    public long getCopies() {
++        return copies;
++    }
++
++    public void setCopies(long copies) {
++        this.copies = copies;
++    }
++}
+Index: src/main/java/library/model/LibraryRespDto.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/model/LibraryRespDto.java b/src/main/java/library/model/LibraryRespDto.java
+new file mode 100644
+--- /dev/null	(date 1616251991833)
++++ b/src/main/java/library/model/LibraryRespDto.java	(date 1616251991833)
+@@ -0,0 +1,33 @@
++package library.model;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class LibraryRespDto {
++    private List<BooksDto> booksDtos = new ArrayList<>();
++    private String status;
++
++    public LibraryRespDto() {
++    }
++
++    public LibraryRespDto(List<BooksDto> booksDtos, String status) {
++        this.booksDtos = booksDtos;
++        this.status = status;
++    }
++
++    public List<BooksDto> getBooksDtos() {
++        return booksDtos;
++    }
++
++    public void setBooksDtos(List<BooksDto> booksDtos) {
++        this.booksDtos = booksDtos;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++}
+Index: src/main/java/library/LibraryApplication.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/library/LibraryApplication.java b/src/main/java/library/LibraryApplication.java
+new file mode 100644
+--- /dev/null	(date 1616467358616)
++++ b/src/main/java/library/LibraryApplication.java	(date 1616467358616)
+@@ -0,0 +1,11 @@
++package library;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++@SpringBootApplication
++public class LibraryApplication {
++    public static void main(String[] args){
++        SpringApplication.run(LibraryApplication.class,args);
++    }
++}
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n    <modelVersion>4.0.0</modelVersion>\n\n    <groupId>org.example</groupId>\n    <artifactId>libraryManagement</artifactId>\n    <version>1.0-SNAPSHOT</version>\n\n    <properties>\n        <maven.compiler.source>8</maven.compiler.source>\n        <maven.compiler.target>8</maven.compiler.target>\n    </properties>\n\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml	(revision 2380e09d101b3a38534b5fd33ce31f34adc10660)
++++ b/pom.xml	(date 1616253743510)
+@@ -7,10 +7,77 @@
+     <groupId>org.example</groupId>
+     <artifactId>libraryManagement</artifactId>
+     <version>1.0-SNAPSHOT</version>
++    <parent>
++        <groupId>org.springframework.boot</groupId>
++        <artifactId>spring-boot-starter-parent</artifactId>
++        <version>2.0.5.RELEASE</version>
++        <relativePath />
++    </parent>
++
+ 
+     <properties>
+         <maven.compiler.source>8</maven.compiler.source>
+         <maven.compiler.target>8</maven.compiler.target>
++        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
++        <java.version>1.8</java.version>
+     </properties>
++    <dependencies>
++
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-web</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-data-jpa</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>com.h2database</groupId>
++            <artifactId>h2</artifactId>
++            <scope>runtime</scope>
++        </dependency>
+ 
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-test</artifactId>
++            <scope>test</scope>
++        </dependency>
++        <dependency>
++            <groupId>junit</groupId>
++            <artifactId>junit</artifactId>
++            <version>4.12</version>
++        </dependency>
++        <dependency>
++            <groupId>org.hamcrest</groupId>
++            <artifactId>hamcrest-all</artifactId>
++            <version>1.3</version>
++            <scope>test</scope>
++        </dependency>
++        <dependency>
++            <groupId>javax.xml.bind</groupId>
++            <artifactId>jaxb-api</artifactId>
++            <version>2.3.0</version>
++        </dependency>
++        <dependency>
++            <groupId>org.javassist</groupId>
++            <artifactId>javassist</artifactId>
++            <version>3.23.1-GA</version>
++        </dependency>
++        <dependency>
++            <groupId>org.mockito</groupId>
++            <artifactId>mockito-core</artifactId>
++            <version>2.22.0</version>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.springframework.boot</groupId>
++                <artifactId>spring-boot-maven-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
+ </project>
+\ No newline at end of file
+Index: src/main/resources/import.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/import.sql b/src/main/resources/import.sql
+new file mode 100644
+--- /dev/null	(date 1616641896843)
++++ b/src/main/resources/import.sql	(date 1616641896843)
+@@ -0,0 +1,16 @@
++INSERT into books(id,name,author_name,copies) values (100, 'rich dad poor dad', 'Ramesh', 4);
++INSERT into books(id,name,author_name,copies) values (101, 'war and peace', 'Khilan', 5);
++INSERT into books(id,name,author_name,copies) values (103, 'head first java', 'kaushik', 7);
++INSERT into books(id,name,author_name,copies) values (104, 'think python', 'Chaitali', 0);
++INSERT into books(id,name,author_name,copies) values (105, 'when spring comes', 'Hardik', 8);
++INSERT into books(id,name,author_name,copies) values (106, 'spring boot in action', 'Komal', 0);
++INSERT into books(id,name,author_name,copies) values (107, 'head first kotlin', 'Muffy', 5);
++
++
++INSERT into user(id,name,email,books_limit) values (11, 'Ramesh', 'Ahmedabad@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (12, 'Khilan', 'Delhi@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (13, 'kaushik', 'Kota@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (14, 'Chaitali', 'Mumbai@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (15, 'Hardik', 'Bhopal@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (16, 'Komal', 'MP@gmail.com', 2);
++INSERT into user(id,name,email,books_limit) values (17, 'Muffy', 'Indore@gmail.com', 2);
+\ No newline at end of file
